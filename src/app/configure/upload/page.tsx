@@ -1,22 +1,35 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import Dropzone, { FileRejection } from 'react-dropzone';
 import { Image, Loader2, MousePointerSquareDashed } from 'lucide-react';
 
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
+import { useUploadThing } from '@/lib/uploadthing';
 
 export default function UploadPage() {
   const { toast } = useToast();
+  const router = useRouter();
 
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   const [isPending, startTransition] = useTransition();
 
-  const isUploading = false;
+  const { startUpload, isUploading } = useUploadThing('imageUploader', {
+    onClientUploadComplete: ([data]) => {
+      const configId = data.serverData.configId;
+      startTransition(() => {
+        router.push(`/configure/design?id=${configId}`);
+      });
+    },
+    onUploadProgress(p) {
+      setUploadProgress(p);
+    },
+  });
 
   const onDropRejected = (rejectedFiles: FileRejection[]) => {
     const [file] = rejectedFiles;
@@ -31,7 +44,7 @@ export default function UploadPage() {
   };
 
   const onDropAccepted = (acceptedFiles: File[]) => {
-    // Handle File Upload
+    startUpload(acceptedFiles, { configId: undefined });
 
     setIsDragOver(false);
   };
