@@ -1,21 +1,16 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import NextImage from 'next/image';
-import { Rnd } from 'react-rnd';
-import { RadioGroup } from '@headlessui/react';
+import { useRouter } from 'next/navigation';
 import { ArrowRight, Check, ChevronsUpDown } from 'lucide-react';
 
 import HandleComponent from '@/components/HandleComponent';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { cn, formatPrice } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { cn, formatPrice } from '@/lib/utils';
+import NextImage from 'next/image';
+import { Rnd } from 'react-rnd';
+import { RadioGroup } from '@headlessui/react';
 import {
   COLORS,
   FINISHES,
@@ -23,24 +18,31 @@ import {
   MODELS,
 } from '@/validators/option-validator';
 import { Label } from '@/components/ui/label';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { BASE_PRICE } from '@/config/products';
-import { toast } from '@/components/ui/use-toast';
+import { useUploadThing } from '@/lib/uploadthing';
+import { useToast } from '@/components/ui/use-toast';
 
 interface DesignConfiguratorProps {
+  configId: string;
   imageUrl: string;
-  confidId: string;
-  imageDimensions: {
-    width: number;
-    height: number;
-  };
+  imageDimensions: { width: number; height: number };
 }
 
-export default function DesignConfigurator({
-  imageDimensions,
+const DesignConfigurator = ({
+  configId,
   imageUrl,
-  confidId,
-}: DesignConfiguratorProps) {
+  imageDimensions,
+}: DesignConfiguratorProps) => {
+  const { toast } = useToast();
+  const router = useRouter();
+
   const [options, setOptions] = useState<{
     color: (typeof COLORS)[number];
     model: (typeof MODELS.options)[number];
@@ -65,6 +67,8 @@ export default function DesignConfigurator({
 
   const phoneCaseRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const { startUpload } = useUploadThing('imageUploader');
 
   async function saveConfiguration() {
     try {
@@ -107,6 +111,8 @@ export default function DesignConfigurator({
 
       const blob = base64ToBlob(base64Data, 'image/png');
       const file = new File([blob], 'filename.png', { type: 'image/png' });
+
+      await startUpload([file], { configId });
     } catch (err) {
       toast({
         title: 'Something went wrong',
@@ -128,10 +134,14 @@ export default function DesignConfigurator({
   }
 
   return (
-    <div className='relative mt-20 mb-20 grid grid-cols-1 lg:grid-cols-3 pb-20'>
-      <div className='relative h-[37.5rem] overflow-hidden col-span-2 w-full max-w-4xl flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 text-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'>
+    <div className='relative mt-20 grid grid-cols-1 lg:grid-cols-3 mb-20 pb-20'>
+      <div
+        ref={containerRef}
+        className='relative h-[37.5rem] overflow-hidden col-span-2 w-full max-w-4xl flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 text-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'
+      >
         <div className='relative w-60 bg-opacity-50 pointer-events-none aspect-[896/1831]'>
           <AspectRatio
+            ref={phoneCaseRef}
             ratio={896 / 1831}
             className='pointer-events-none relative z-50 aspect-[896/1831] w-full'
           >
@@ -146,7 +156,7 @@ export default function DesignConfigurator({
           <div
             className={cn(
               'absolute inset-0 left-[3px] top-px right-[3px] bottom-px rounded-[32px]',
-              `bg-blue-900`
+              `bg-${options.color.tw}`
             )}
           />
         </div>
@@ -170,6 +180,8 @@ export default function DesignConfigurator({
             const { x, y } = data;
             setRenderedPosition({ x, y });
           }}
+          className='absolute z-20 border-[3px] border-primary'
+          lockAspectRatio
           resizeHandleComponent={{
             bottomRight: <HandleComponent />,
             bottomLeft: <HandleComponent />,
@@ -179,8 +191,8 @@ export default function DesignConfigurator({
         >
           <div className='relative w-full h-full'>
             <NextImage
-              fill
               src={imageUrl}
+              fill
               alt='your image'
               className='pointer-events-none'
             />
@@ -189,7 +201,7 @@ export default function DesignConfigurator({
       </div>
 
       <div className='h-[37.5rem] w-full col-span-full lg:col-span-1 flex flex-col bg-white'>
-        <ScrollArea className='flex-1 relative overflow-auto'>
+        <ScrollArea className='relative flex-1 overflow-auto'>
           <div
             aria-hidden='true'
             className='absolute z-10 inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white pointer-events-none'
@@ -362,7 +374,11 @@ export default function DesignConfigurator({
                     100
                 )}
               </p>
-              <Button size='sm' className='w-full'>
+              <Button
+                onClick={() => saveConfiguration()}
+                size='sm'
+                className='w-full'
+              >
                 Continue
                 <ArrowRight className='h-4 w-4 ml-1.5 inline' />
               </Button>
@@ -372,4 +388,6 @@ export default function DesignConfigurator({
       </div>
     </div>
   );
-}
+};
+
+export default DesignConfigurator;

@@ -29,7 +29,7 @@ export default async function DesignPage({ searchParams }: DesignPageProps) {
 
   return (
     <DesignConfigurator
-      confidId={id}
+      configId={id}
       imageUrl={imageUrl}
       imageDimensions={{ height, width }}
     />
