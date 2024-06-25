@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
 import { ArrowRight, Check, ChevronsUpDown } from 'lucide-react';
 
 import HandleComponent from '@/components/HandleComponent';
@@ -28,6 +29,7 @@ import { Button } from '@/components/ui/button';
 import { BASE_PRICE } from '@/config/products';
 import { useUploadThing } from '@/lib/uploadthing';
 import { useToast } from '@/components/ui/use-toast';
+import { SaveConfigArgs, saveConfig as _saveConfig } from './actions';
 
 interface DesignConfiguratorProps {
   configId: string;
@@ -42,6 +44,22 @@ const DesignConfigurator = ({
 }: DesignConfiguratorProps) => {
   const { toast } = useToast();
   const router = useRouter();
+
+  const { mutate: saveConfig, isPending } = useMutation({
+    mutationFn: async (args: SaveConfigArgs) => {
+      await Promise.all([saveConfiguration, _saveConfig(args)]);
+    },
+    onError: () => {
+      toast({
+        title: 'Something went wrong',
+        description: 'There was an error on our end. Please try again.',
+        variant: 'destructive',
+      });
+    },
+    onSuccess: () => {
+      router.push(`/configure/preview?id=${configId}`);
+    },
+  });
 
   const [options, setOptions] = useState<{
     color: (typeof COLORS)[number];
@@ -375,7 +393,16 @@ const DesignConfigurator = ({
                 )}
               </p>
               <Button
-                onClick={() => saveConfiguration()}
+                disabled={isPending}
+                onClick={() =>
+                  saveConfig({
+                    configId,
+                    color: options.color.value,
+                    finish: options.finish.value,
+                    material: options.material.value,
+                    model: options.model.value,
+                  })
+                }
                 size='sm'
                 className='w-full'
               >
