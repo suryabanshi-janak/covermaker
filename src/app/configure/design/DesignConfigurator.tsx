@@ -29,7 +29,7 @@ import { Button } from '@/components/ui/button';
 import { BASE_PRICE } from '@/config/products';
 import { useUploadThing } from '@/lib/uploadthing';
 import { useToast } from '@/components/ui/use-toast';
-import { SaveConfigArgs, saveConfig as _saveConfig } from './actions';
+import { saveConfig as _saveConfig, SaveConfigArgs } from './actions';
 
 interface DesignConfiguratorProps {
   configId: string;
@@ -46,8 +46,9 @@ const DesignConfigurator = ({
   const router = useRouter();
 
   const { mutate: saveConfig, isPending } = useMutation({
+    mutationKey: ['save-config'],
     mutationFn: async (args: SaveConfigArgs) => {
-      await Promise.all([saveConfiguration, _saveConfig(args)]);
+      await Promise.all([saveConfiguration(), _saveConfig(args)]);
     },
     onError: () => {
       toast({
