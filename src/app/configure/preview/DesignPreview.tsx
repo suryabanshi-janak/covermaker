@@ -15,6 +15,7 @@ import Phone from '@/components/Phone';
 import { COLORS, MODELS } from '@/validators/option-validator';
 import { createCheckoutSession } from './actions';
 import { useToast } from '@/components/ui/use-toast';
+import LoginModal from '@/components/LoginModal';
 
 export default function DesignPreview({
   configuration,
@@ -24,6 +25,7 @@ export default function DesignPreview({
   const router = useRouter();
   const { toast } = useToast();
   const { id } = configuration;
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
 
   const { user } = useKindeBrowserClient();
 
@@ -66,7 +68,7 @@ export default function DesignPreview({
       createPaymentSession({ configId: id });
     } else {
       localStorage.setItem('configurationId', id);
-      // setIsLoginModalOpen(true);
+      setIsLoginModalOpen(true);
     }
   };
 
@@ -81,6 +83,8 @@ export default function DesignPreview({
           config={{ elementCount: 200, spread: 90 }}
         />
       </div>
+
+      <LoginModal isOpen={isLoginModalOpen} setIsOpen={setIsLoginModalOpen} />
 
       <div className='mt-20 flex flex-col items-center md:grid text-sm sm:grid-cols-12 sm:grid-rows-1 sm:gap-x-6 md:gap-x-8 lg:gap-x-12'>
         <div className='md:col-span-4 lg:col-span-3 md:row-span-2 md:row-end-2'>
